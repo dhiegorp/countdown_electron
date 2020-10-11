@@ -3,24 +3,32 @@ const countdown = require('./countdown.js')
 
 const { app, BrowserWindow, ipcMain } = electron;
 
-let mainWindow;
+let windows = [];
 
 app.on('ready', () => {
-    mainWindow = new BrowserWindow({
-        height: 400,
-        width: 400
+    [1, 2, 3].forEach(_ => {
+        let win = new BrowserWindow({
+            height: 400,
+            width: 400
+        })
+        win.loadURL(`file://${__dirname}/countdown.html`);
+
+        app.on('closed', () => {
+            win = null;
+        });
+
+        windows.push(win);
     })
-    mainWindow.loadURL(`file://${__dirname}/countdown.html`);
-    //  countdown();
 });
 
-app.on('closed', () => {
-    mainWindow = null;
-});
+
 
 
 ipcMain.on('countdown-start', _ => {
     countdown(count => {
-        mainWindow.webContents.send('countdown', count);
+        windows.forEach(win => {
+            win.webContents.send('countdown', count);
+        })
+
     });
 })
